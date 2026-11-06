@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intent AI · הדגמה</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
+<body>
+  <div class="demo-bar">
+    <a href="/">→ כל האתרים</a>
+    <span class="title" id="bar-title">הדגמת Intent AI</span>
+    <span class="bar-actions">
+      <button type="button" id="new-user" class="bar-btn" title="מדמה מבקר חדש: מזהה חדש ובקשת הסכמה מחדש">👤 משתמש חדש</button>
+      <a href="/dashboard.html" id="dash-link" target="_blank" rel="noopener">דשבורד ↗</a>
+    </span>
+  </div>
+  <main class="stage">
+    <img id="shot" alt="" hidden>
+    <div class="fallback" id="fallback" hidden>
+      <h2 id="fb-title"></h2>
+      <p id="fb-text"></p>
+    </div>
+  </main>
+  <script type="module">
+    const $ = id => document.getElementById(id);
+    // Demo only: simulate a different visitor (new anonymous id + fresh consent) to show distinct users.
+    $('new-user').onclick = () => {
+      try { localStorage.removeItem('iai_end_user'); localStorage.removeItem('iai_consent'); } catch { /* storage unavailable */ }
+      location.reload();
+    };
+    const slug = new URLSearchParams(location.search).get('s') || 'shufersal';
+    const showFallback = (title, html) => {
+      $('shot').hidden = true;
+      $('fallback').hidden = false;
+      $('fb-title').textContent = title;
+      $('fb-text').innerHTML = html; // static strings only
+    };
+
+    let site;
+    try {
+      const sites = await fetch('/api/sites').then(r => r.json());
+      site = sites.find(s => s.slug === slug);
+    } catch {
+      showFallback('השרת לא זמין', 'הפעילו את השרת עם <code>npm start</code> ורעננו את הדף.');
+    }
+
+    if (!site) {
+      if ($('fallback').hidden) showFallback('האתר לא נמצא', 'חזרו ל<a href="/">רשימת האתרים</a>.');
+    } else {
+      document.title = `Intent AI · ${site.name}`;
+      $('bar-title').textContent = `הדגמת Intent AI · ${site.name} (צילום מסך · הדגמה בלבד, ללא קשר ל${site.name})`;
+      $('dash-link').href = `/dashboard.html?org=${encodeURIComponent(slug)}`;
+      $('dash-link').textContent = `הדשבורד של ${site.name} ↗`;
+      const shot = $('shot');
+      shot.alt = `צילום מסך של ${site.name}`;
+      shot.onload = () => { shot.hidden = false; };
+      shot.onerror = () => {
+        $('bar-title').textContent = `הדגמת Intent AI · ${site.name}`;
+        showFallback(site.name,
+          'האתר חוסם צילום אוטומטי, לכן אין כאן צילום מסך — <strong>כפתור המשוב בפינה עובד כרגיל</strong>.<br><br>' +
+          'להוספת צילום ידני: פתחו את האתר ב-Edge, לחצו <code>Ctrl+Shift+S</code> ← "לכידת עמוד מלא" ← שמירה, ' +
+          `ושמרו את הקובץ בשם <code>presentation/simulation/public/sites/${slug}.png</code>.`);
+        const a = document.createElement('a');
+        a.href = site.url; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = `פתיחת האתר האמיתי ↗`;
+        a.className = 'btn';
+        $('fallback').append(a);
+      };
+      shot.src = `/sites/${encodeURIComponent(slug)}.png`;
+
+      const { apiKey } = await fetch(`/api/sites/${encodeURIComponent(slug)}/widget-config`).then(r => r.json());
+      const s = document.createElement('script');
+      s.src = '/widget.js';
+      s.dataset.apiKey = apiKey;
+      s.dataset.pageUrl = site.url;
+      s.dataset.siteName = site.name;
+      document.body.append(s);
+    }
+  </script>
+</body>
+</html>

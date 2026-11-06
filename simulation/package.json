@@ -1,0 +1,15 @@
+{
+  "name": "intent-ai-simulation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local demo of Intent AI voice/text feedback on real Israeli sites",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "capture": "node scripts/capture.js",
+    "reset": "node scripts/reset.js"
+  },
+  "dependencies": { "express": "^4.21.2" },
+  "engines": { "node": ">=22.5.0" }
+}

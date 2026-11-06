@@ -1,0 +1,37 @@
+[
+  {
+    "slug": "shufersal",
+    "name": "שופרסל",
+    "url": "https://www.shufersal.co.il/online/he/",
+    "industry": "קמעונאות",
+    "apiKey": "sim_shufersal_demo_key"
+  },
+  {
+    "slug": "elal",
+    "name": "אל על",
+    "url": "https://www.elal.com/heb/israel",
+    "industry": "תעופה",
+    "apiKey": "sim_elal_demo_key"
+  },
+  {
+    "slug": "ynet",
+    "name": "ynet",
+    "url": "https://www.ynet.co.il/",
+    "industry": "מדיה וחדשות",
+    "apiKey": "sim_ynet_demo_key"
+  },
+  {
+    "slug": "superpharm",
+    "name": "סופר-פארם",
+    "url": "https://shop.super-pharm.co.il/",
+    "industry": "פארם ובריאות",
+    "apiKey": "sim_superpharm_demo_key"
+  },
+  {
+    "slug": "partner",
+    "name": "פרטנר",
+    "url": "https://www.partner.co.il/",
+    "industry": "תקשורת",
+    "apiKey": "sim_partner_demo_key"
+  }
+]

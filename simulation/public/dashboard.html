@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intent AI · דשבורד</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
+<body>
+  <div class="demo-bar">
+    <a href="/">→ כל האתרים</a>
+    <span class="title">Intent AI · דשבורד משובים <span class="badge">TEST DB</span></span>
+    <span></span>
+  </div>
+  <main class="wrap wide">
+    <div class="toolbar">
+      <h1 style="margin:0;font-size:24px">משובים לפי לקוח</h1>
+      <div>
+        <span class="updated" id="updated"></span>
+        <button class="btn" id="refresh" type="button">↻ רענון</button>
+      </div>
+    </div>
+    <p class="updated" id="retention-note"></p>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="stats" id="stats"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>תאריך</th><th>לקוח</th><th>משתמש</th><th>סוג</th><th>תוכן / תמלול</th><th>הקלטה</th>
+            <th>דירוג</th><th>סנטימנט</th><th>קטגוריה</th><th>עמוד</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty-state" id="empty" hidden>עדיין אין משובים. פתחו אתר מהרשימה ושלחו משוב ראשון.</div>
+    </div>
+  </main>
+  <script type="module">
+    const $ = id => document.getElementById(id);
+    const CATEGORY = { checkout: 'תשלום וקופה', travel: 'טיסות ונסיעה', delivery: 'משלוחים', prices: 'מחירים', billing: 'חיובים וחשבונות', connectivity: 'קליטה ואינטרנט', pharmacy: 'מרשמים ותרופות', content: 'תוכן ופרסומות', site: 'האתר', service: 'שירות', other: 'אחר' };
+    const SENTIMENT = { positive: 'חיובי', neutral: 'ניטרלי', negative: 'שלילי' };
+    let selected = new URLSearchParams(location.search).get('org') || '';
+    let lastKey = '';
+
+    const el = (tag, props = {}, ...children) => {
+      const n = document.createElement(tag);
+      Object.assign(n, props);
+      n.append(...children.filter(c => c !== null && c !== undefined));
+      return n;
+    };
+
+    function renderTabs(stats) {
+      const tabs = [{ slug: '', name: 'הכל', total: stats.reduce((a, s) => a + s.total, 0) }, ...stats];
+      $('tabs').replaceChildren(...tabs.map(t => {
+        const b = el('button', { className: 'tab', type: 'button', textContent: `${t.name} (${t.total})` });
+        b.setAttribute('role', 'tab');
+        b.setAttribute('aria-selected', String(t.slug === selected));
+        b.onclick = () => {
+          selected = t.slug;
+          history.replaceState(null, '', selected ? `?org=${encodeURIComponent(selected)}` : location.pathname);
+          lastKey = '';
+          load();
+        };
+        return b;
+      }));
+    }
+
+    function renderStats(stats) {
+      const scope = selected ? stats.filter(s => s.slug === selected) : stats;
+      const sum = k => scope.reduce((a, s) => a + (s[k] || 0), 0);
+      const cats = {};
+      for (const s of scope) for (const [c, n] of Object.entries(s.categories)) cats[c] = (cats[c] || 0) + n;
+      const top = Object.entries(cats).sort((a, b) => b[1] - a[1])[0];
+      const total = sum('total');
+      const pct = n => total ? `${Math.round((n / total) * 100)}%` : '—';
+      const card = (label, value, sub) => el('div', { className: 'stat' },
+        el('div', { className: 'label', textContent: label }),
+        el('div', { className: 'value', textContent: value }),
+        sub ? el('div', { className: 'sub', textContent: sub }) : null);
+      $('stats').replaceChildren(
+        card('סה״כ משובים', String(total)),
+        card('משתמשים ייחודיים', String(sum('users')), sum('users') ? `${(total / sum('users')).toFixed(1)} משובים למשתמש` : null),
+        card('קול / טקסט', `${sum('voice')} / ${sum('text')}`),
+        card('חיובי', String(sum('positive')), pct(sum('positive'))),
+        card('ניטרלי', String(sum('neutral')), pct(sum('neutral'))),
+        card('שלילי', String(sum('negative')), pct(sum('negative'))),
+        card('נושא מוביל', top ? CATEGORY[top[0]] || top[0] : '—', top ? `${top[1]} משובים` : null),
+      );
+    }
+
+    function renderRows(rows) {
+      $('empty').hidden = rows.length > 0;
+      $('rows').replaceChildren(...rows.map(f => {
+        const date = new Date(f.createdAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+        const content = f.content
+          ? el('td', { className: 'content', textContent: f.content })
+          : el('td', { className: 'content' }, el('span', { className: 'empty', textContent: f.type === 'voice' ? 'ללא תמלול' : '—' }));
+        let audio = '—';
+        if (f.audioPath) {
+          audio = el('audio', { controls: true, preload: 'none', src: `/audio/${encodeURIComponent(f.audioPath)}` });
+        }
+        let page = '—';
+        if (f.pageUrl) {
+          try { page = el('a', { href: f.pageUrl, target: '_blank', rel: 'noopener', textContent: new URL(f.pageUrl).hostname }); }
+          catch { page = f.pageUrl; }
+        }
+        return el('tr', {},
+          el('td', { className: 'nowrap', textContent: date }),
+          el('td', { className: 'nowrap', textContent: f.orgName }),
+          el('td', { className: 'user', title: `מזהה: ${f.endUserId}${f.ipHash ? ' · IP hash: ' + f.ipHash : ''}` },
+            el('div', { className: 'uid', textContent: '#' + String(f.endUserId).slice(0, 6) }),
+            el('div', { className: 'ctx', textContent: [f.browser, f.os, f.device, f.country].filter(Boolean).join(' · ') || '—' })),
+          el('td', {}, el('span', { className: 'pill type', textContent: f.type === 'voice' ? '🎤 קול' : '✍️ טקסט' })),
+          content,
+          el('td', {}, audio),
+          el('td', { className: 'stars', textContent: f.rating ? '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating) : '—' }),
+          el('td', {}, el('span', { className: `pill ${f.sentiment}`, textContent: SENTIMENT[f.sentiment] || '—' })),
+          el('td', { className: 'nowrap', textContent: CATEGORY[f.category] || '—' }),
+          el('td', {}, page),
+        );
+      }));
+    }
+
+    async function load() {
+      try {
+        const q = selected ? `?org=${encodeURIComponent(selected)}` : '';
+        const [stats, rows] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch(`/api/feedback${q}`).then(r => r.json()),
+        ]);
+        $('updated').textContent = `עודכן ${new Date().toLocaleTimeString('he-IL')}`;
+        const key = JSON.stringify([selected, stats, rows]);
+        if (key === lastKey) return;
+        // Don't wipe the table while someone is listening to a recording.
+        if ([...document.querySelectorAll('audio')].some(a => !a.paused)) return;
+        lastKey = key;
+        renderTabs(stats);
+        renderStats(stats);
+        renderRows(rows);
+      } catch {
+        $('updated').textContent = 'לא ניתן להתחבר לשרת';
+      }
+    }
+
+    fetch('/api/consent').then(r => r.json()).then(c => {
+      $('retention-note').textContent = `משובים והקלטות נמחקים אוטומטית אחרי ${c.retentionDays} ימים · נאספים רק אחרי הסכמת המשתמש (גרסת הודעה ${c.version})`;
+    }).catch(() => {});
+    $('refresh').onclick = () => { lastKey = ''; load(); };
+    load();
+    setInterval(load, 10000);
+  </script>
+</body>
+</html>

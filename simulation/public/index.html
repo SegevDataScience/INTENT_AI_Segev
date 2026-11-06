@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intent AI · סימולציה</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
+<body>
+  <div class="demo-bar">
+    <span></span>
+    <span class="title">Intent AI <span class="badge">סימולציה מקומית</span></span>
+    <a href="/dashboard.html">דשבורד כל האתרים ←</a>
+  </div>
+  <main class="wrap wide">
+    <section class="hero">
+      <h1>הדגמת Intent AI על אתרים ישראליים</h1>
+      <p>בחרו אתר, לחצו על כפתור <strong>💬 משוב</strong> בפינה ושלחו משוב בקול או בטקסט.
+        כל אתר הוא לקוח נפרד ב-TEST DB, והמשוב מופיע מיד בדשבורד שלו.</p>
+      <div class="summary" id="summary"></div>
+    </section>
+    <div class="grid" id="sites"><p>טוען…</p></div>
+    <p class="disclaimer">הדגמה פנימית בלבד. האתרים מוצגים כצילומי מסך ואין קשר בינם לבין Intent AI.</p>
+  </main>
+  <script type="module">
+    const grid = document.getElementById('sites');
+    const el = (tag, props = {}, ...kids) => { const n = document.createElement(tag); Object.assign(n, props); n.append(...kids.filter(Boolean)); return n; };
+
+    try {
+      const [sites, stats] = await Promise.all([
+        fetch('/api/sites').then(r => r.json()),
+        fetch('/api/stats').then(r => r.json()),
+      ]);
+      const bySlug = Object.fromEntries(stats.map(s => [s.slug, s]));
+      const total = stats.reduce((a, s) => a + s.total, 0);
+      document.getElementById('summary').textContent = `${sites.length} אתרים · ${total} משובים ב-TEST DB`;
+
+      grid.replaceChildren(...sites.map(s => {
+        const st = bySlug[s.slug] || { total: 0, voice: 0, text: 0 };
+        const siteHref = `/site.html?s=${encodeURIComponent(s.slug)}`;
+
+        const thumb = el('a', { className: 'thumb', href: siteHref, ariaLabel: `כניסה ל${s.name}` },
+          el('span', { className: 'thumb-name', textContent: s.name }));
+        const img = new Image();
+        img.onload = () => { thumb.replaceChildren(); thumb.style.backgroundImage = `url("${img.src}")`; };
+        img.src = `/sites/${encodeURIComponent(s.slug)}.png`;
+
+        const count = el('span', { className: 'count', textContent: st.total ? `${st.total} משובים (${st.voice} קול · ${st.text} טקסט)` : 'עדיין אין משובים' });
+        return el('article', { className: 'card' },
+          thumb,
+          el('div', { className: 'body' },
+            el('div', { className: 'name', textContent: s.name }),
+            el('div', { className: 'meta' },
+              el('span', { className: 'industry', textContent: s.industry || '' }),
+              el('span', { className: 'host', textContent: new URL(s.url).hostname })),
+            count,
+            el('div', { className: 'actions' },
+              el('a', { className: 'btn primary', href: siteHref, textContent: 'כניסה ומשוב' }),
+              el('a', { className: 'btn', href: `/dashboard.html?org=${encodeURIComponent(s.slug)}`, textContent: '📊 דשבורד' }))));
+      }));
+      if (!sites.length) grid.textContent = 'אין אתרים מוגדרים ב-sites.json';
+    } catch {
+      grid.textContent = 'לא ניתן לטעון את רשימת האתרים. האם השרת רץ? (npm start)';
+    }
+  </script>
+</body>
+</html>
