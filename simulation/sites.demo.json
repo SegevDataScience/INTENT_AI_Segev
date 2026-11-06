@@ -1,0 +1,37 @@
+[
+  {
+    "slug": "market",
+    "name": "מרקט פלוס",
+    "url": "https://market.example/",
+    "industry": "קמעונאות",
+    "apiKey": "demo_market_key"
+  },
+  {
+    "slug": "wings",
+    "name": "כנף טיסות",
+    "url": "https://wings.example/",
+    "industry": "תעופה",
+    "apiKey": "demo_wings_key"
+  },
+  {
+    "slug": "news",
+    "name": "חדשות היום",
+    "url": "https://news.example/",
+    "industry": "מדיה וחדשות",
+    "apiKey": "demo_news_key"
+  },
+  {
+    "slug": "pharma",
+    "name": "פארם פלוס",
+    "url": "https://pharma.example/",
+    "industry": "פארם ובריאות",
+    "apiKey": "demo_pharma_key"
+  },
+  {
+    "slug": "telco",
+    "name": "תקשורת פלוס",
+    "url": "https://telco.example/",
+    "industry": "תקשורת",
+    "apiKey": "demo_telco_key"
+  }
+]

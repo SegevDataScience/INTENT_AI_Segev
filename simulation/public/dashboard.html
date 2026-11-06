@@ -66,13 +66,14 @@
       }));
     }
 
-    function renderStats(stats) {
+    function renderStats(stats, rows) {
       const scope = selected ? stats.filter(s => s.slug === selected) : stats;
       const sum = k => scope.reduce((a, s) => a + (s[k] || 0), 0);
       const cats = {};
       for (const s of scope) for (const [c, n] of Object.entries(s.categories)) cats[c] = (cats[c] || 0) + n;
       const top = Object.entries(cats).sort((a, b) => b[1] - a[1])[0];
       const total = sum('total');
+      const distinctUsers = new Set(rows.map(f => f.endUserId)).size; // a user who wrote to two sites counts once
       const pct = n => total ? `${Math.round((n / total) * 100)}%` : '—';
       const card = (label, value, sub) => el('div', { className: 'stat' },
         el('div', { className: 'label', textContent: label }),
@@ -80,7 +81,7 @@
         sub ? el('div', { className: 'sub', textContent: sub }) : null);
       $('stats').replaceChildren(
         card('סה״כ משובים', String(total)),
-        card('משתמשים ייחודיים', String(sum('users')), sum('users') ? `${(total / sum('users')).toFixed(1)} משובים למשתמש` : null),
+        card('משתמשים ייחודיים', String(distinctUsers), distinctUsers ? `${(total / distinctUsers).toFixed(1)} משובים למשתמש` : null),
         card('קול / טקסט', `${sum('voice')} / ${sum('text')}`),
         card('חיובי', String(sum('positive')), pct(sum('positive'))),
         card('ניטרלי', String(sum('neutral')), pct(sum('neutral'))),
@@ -136,7 +137,7 @@
         if ([...document.querySelectorAll('audio')].some(a => !a.paused)) return;
         lastKey = key;
         renderTabs(stats);
-        renderStats(stats);
+        renderStats(stats, rows);
         renderRows(rows);
       } catch {
         $('updated').textContent = 'לא ניתן להתחבר לשרת';

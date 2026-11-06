@@ -1,35 +1,68 @@
-# presentation: הדגמה של Intent AI
+# Intent AI: הדגמה
 
-כל מה שצריך כדי להציג את המוצר: אתר הדגמה שרץ מקומית, נתוני בדיקה, מחקר נתונים ומצגת.
+**משוב קולי וטקסטואלי שהופך לתובנות.** משתמשים משאירים משוב באתר בקול או בטקסט, המערכת מנתחת אותו ושומרת אותו, וצוות המוצר רואה הכול בדשבורד לפי לקוח.
 
-| מה | איפה |
+> 🌐 **דמו חי:** https://segevdatascience.github.io/INTENT_AI_Segev/ (אתרי דמה ונתונים סינתטיים. משוב שתשלחו נשמר רק בדפדפן שלכם)
+> 📓 **מחברת עם תרשימים:** [`simulation/notebooks/raw_data_demo.ipynb`](simulation/notebooks/raw_data_demo.ipynb)
+> 📊 **מצגת (3 שקופיות):** [`Intent-AI-overview.pptx`](Intent-AI-overview.pptx)
+
+## ארכיטקטורה
+
+![ארכיטקטורה: מהאתר, דרך השרת ומסד הנתונים, אל הדשבורד ואל הניתוח](assets/architecture.svg)
+
+| שכבה | מה יש | איפה |
+|---|---|---|
+| **1. סימולציה על אתרים** | ווידג׳ט משוב (קול עם תמלול, טקסט עם דירוג) מעל 5 אתרים ישראליים | [`simulation/public/`](simulation/public/) |
+| **2. שרת ו־API** | Node + Express. מקבל משוב, מנתח סנטימנט ונושא, ומזהה משתמשים ייחודיים (דפדפן, מדינה, IP מוצפן בלבד) | [`simulation/src/`](simulation/src/) |
+| **3. TEST DB** | SQLite דרך `node:sqlite` (מצב WAL). הטבלאות `organizations → products → end_users → feedback` והקלטות כקבצים. זה אותו מודל נתונים של המוצר (Prisma/Postgres) | `simulation/data/test.db` |
+| **4. דשבורד** | משובים, משתמשים ייחודיים וסנטימנט, עם סינון לכל אתר. נשמר מאחורה ב־TEST DB ונקרא דרך ה־API | [`simulation/public/dashboard.html`](simulation/public/dashboard.html) |
+| **5. נתונים לניתוח** | מחברת Jupyter שמתחברת ל־TEST DB בקריאה בלבד: רשומות גולמיות ותרשימי מגמות | [`simulation/notebooks/`](simulation/notebooks/) |
+| **דמו חי** | אותם עמודים ואותו ווידג׳ט ב־GitHub Pages, עם API שרץ בדפדפן ונתונים סינתטיים | [`docs/`](docs/) |
+| **קוד המוצר** | Next.js, Express, Postgres, Whisper ו־Claude. נמצא בריפו הארגוני ולא כלול כאן | aibasicintent-dev |
+
+### לאיזה DB זה מחובר?
+
+| סביבה | מסד נתונים | איך |
+|---|---|---|
+| הרצה מקומית (`npm start`) | **TEST DB, SQLite**: קובץ `simulation/data/test.db` | השרת כותב וקורא דרך [`src/db.js`](simulation/src/db.js). המחברת קוראת ישירות (`mode=ro`) |
+| דמו חי (GitHub Pages) | **בדפדפן**: נתונים סינתטיים מ־[`docs/data/seed.json`](docs/data/seed.json), ומשוב חדש ב־`localStorage` | [`docs/static-api.js`](docs/static-api.js) עונה לאותן בקשות `/api/...` |
+| המוצר המלא | **PostgreSQL (Neon)** דרך Prisma | בריפו הארגוני |
+
+## צילומי מסך
+
+| העמוד הראשי: בחירת אתר | אתר עם ווידג׳ט המשוב |
 |---|---|
-| **מצגת:** 3 שקופיות בעברית שמסבירות מה המוצר ומה יש | [`Intent-AI-overview.pptx`](Intent-AI-overview.pptx) |
-| **אתר ההדגמה:** משוב בקול ובטקסט על 5 אתרים ישראליים (שופרסל, אל על, ynet, סופר־פארם, פרטנר) | [`simulation/`](simulation/) |
-| **הקוד עם החיבור למידע:** שרת Node + מסד נתוני בדיקה (TEST DB, SQLite) | [`simulation/src/`](simulation/src/) · `simulation/data/test.db` |
-| **הדשבורד:** משובים לפי לקוח, משתמשים ייחודיים, מגמות | `simulation/public/dashboard.html` |
-| **מחקר נתונים:** רשומות גולמיות ותרשימי מגמות (Jupyter) | [`simulation/notebooks/raw_data.ipynb`](simulation/notebooks/raw_data.ipynb) |
-| **מסמכי תכנון:** אפיון ותוכנית עבודה | [`docs/superpowers/`](docs/superpowers/) |
+| ![העמוד הראשי](assets/screenshots/hub.png) | ![אתר עם ווידג׳ט](assets/screenshots/site-widget.png) |
+| **דשבורד לכל האתרים** | **דשבורד לאתר אחד** |
+| ![דשבורד כל האתרים](assets/screenshots/dashboard-all.png) | ![דשבורד לאתר](assets/screenshots/dashboard-site.png) |
 
-## איך מפעילים את ההדגמה
+### מתוך מחברת הניתוח
+![משובים לפי שעה ואתר](assets/screenshots/notebook-heatmap.png)
+![משובים ומשתמשים ייחודיים לפי אתר](assets/screenshots/notebook-sites.png)
+
+## הרצה מקומית
 
 ```bash
-cd presentation/simulation
+cd simulation
 npm install
-npm run capture   # צילום מסך של האתרים האמיתיים (פעם אחת)
-npm start
+npm run capture   # צילום מסך של האתרים האמיתיים (פעם אחת, נשאר מקומי)
+npm start         # http://localhost:4000
 ```
 
 | עמוד | כתובת |
 |---|---|
-| העמוד הראשי: בחירת אתר | http://localhost:4000 |
+| העמוד הראשי | http://localhost:4000 |
 | דשבורד לכל האתרים | http://localhost:4000/dashboard.html |
 | דשבורד לאתר אחד | http://localhost:4000/dashboard.html?org=elal |
-| מדיניות פרטיות | http://localhost:4000/privacy.html |
 
-- **דורש:** Node 22.5 ומעלה. בלי Docker ובלי מפתחות בתשלום.
-- **בהדגמה:** הכפתור "👤 משתמש חדש" בסרגל העליון מדמה מבקר נוסף, כדי להראות משתמשים ייחודיים.
-- **לפני הדגמה:** כדי לאפס את הנתונים, עוצרים את השרת ומריצים `npm run reset`.
-- **מחברת המחקר:** פותחים ב־VS Code, בוחרים Python kernel ומריצים Run All. לפני commit מריצים Clear All Outputs.
+- **דורש:** Node 22.5 ומעלה. בלי Docker ובלי מפתחות.
+- **בדיקות:** `npm test` (53 בדיקות).
+- **בניית הדמו החי:** `npm run build:static`, שכותב ל־`docs/`.
+- **בהדגמה:** הכפתור "👤 משתמש חדש" מדמה מבקר נוסף.
+- **ציות ופרטיות:** הסכמה לפני איסוף, הורדה ומחיקה של הנתונים, מחיקה אוטומטית אחרי 90 יום, GPC, והשרת מאזין רק מקומית. פרטים ב־[`simulation/README.md`](simulation/README.md).
 
-פרטים מלאים, כולל ציות ופרטיות: [`simulation/README.md`](simulation/README.md).
+## עדכונים וגרסאות
+כל עדכון נדחף לשני מקורות: הריפו הארגוני (להצעת מיזוג) והריפו האישי (לתצוגה). ההנחיה ורשימת הגרסאות נמצאות ב־[`UPDATES.md`](UPDATES.md).
+
+---
+<sub>הדגמה בלבד. בדמו החי האתרים הם אתרי דמה. בגרסה המקומית מוצגים צילומי מסך של אתרים אמיתיים, שנשארים על המחשב ואין קשר בין Intent AI לבעליהם.</sub>

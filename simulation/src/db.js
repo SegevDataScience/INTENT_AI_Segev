@@ -86,7 +86,7 @@ export function upsertSite(db, site) {
 
 export function listSites(db) {
   return db.prepare(`SELECT o.slug, o.name, o.industry, p.url FROM organizations o
-    JOIN products p ON p.organization_id = o.id WHERE o.active = 1 ORDER BY o.created_at, o.slug`).all().map(r => ({ ...r }));
+    JOIN products p ON p.organization_id = o.id WHERE o.active = 1 ORDER BY o.created_at, o.rowid`).all().map(r => ({ ...r }));
 }
 
 export function getApiKeyForSlug(db, slug) {
@@ -130,7 +130,7 @@ export function insertFeedback(db, f) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(id, f.productId, f.endUserId, f.type, f.content ?? null, f.audioPath ?? null,
       f.audioDurationMs ?? null, f.rating ?? null, f.sentiment ?? null, f.category ?? null,
-      f.pageUrl ?? null, now(), f.consentVersion ?? null, f.consentAt ?? null,
+      f.pageUrl ?? null, f.createdAt ?? now(), f.consentVersion ?? null, f.consentAt ?? null,
       f.browser ?? null, f.os ?? null, f.device ?? null, f.language ?? null, f.timeZone ?? null,
       f.country ?? null, f.ipHash ?? null);
   return { ...db.prepare(`${FEEDBACK_SELECT} WHERE f.id = ?`).get(id) };
@@ -154,7 +154,7 @@ export function getStats(db) {
     JOIN products p ON p.organization_id = o.id
     LEFT JOIN feedback f ON f.product_id = p.id
     WHERE o.active = 1
-    GROUP BY o.id ORDER BY o.created_at, o.slug`).all();
+    GROUP BY o.id ORDER BY o.created_at, o.rowid`).all();
   const cats = db.prepare(`SELECT o.slug, f.category, COUNT(*) AS n FROM feedback f
     JOIN products p ON p.id = f.product_id JOIN organizations o ON o.id = p.organization_id
     GROUP BY o.slug, f.category`).all();

@@ -14,7 +14,8 @@
   const PAGE_URL = script.dataset.pageUrl || location.href;
   const SITE_NAME = script.dataset.siteName || 'האתר';
   const GPC = navigator.globalPrivacyControl === true;
-  const BASE = new URL(script.src, location.href).origin;
+  // Folder the widget was served from (no trailing slash): works at the site root and under a sub-path (GitHub Pages).
+  const BASE = new URL('.', new URL(script.src, location.href)).href.replace(/\/$/, '');
   const MAX_RECORD_MS = 120000;
   const MAX_TEXT = 5000;
 

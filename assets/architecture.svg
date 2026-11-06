@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" font-family="Segoe UI, Arial, sans-serif" direction="rtl" role="img" aria-labelledby="t d">
+  <title id="t">Intent AI demo architecture</title>
+  <desc id="d">Real sites with a feedback widget send voice and text to a Node API, which analyzes and stores it in a SQLite TEST DB. A per-customer dashboard reads it through the API and a Jupyter notebook reads it directly in read-only mode. The product code lives in the organization repo; a static live demo runs the same pages on GitHub Pages with synthetic data.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b4bff"/>
+    </marker>
+    <style>
+      .box { fill: #ffffff; stroke: #e3e6ee; stroke-width: 1.5; }
+      .tint { fill: #ecebff; stroke: none; }
+      .h { font-size: 20px; font-weight: 700; fill: #14122b; }
+      .b { font-size: 14.5px; fill: #3d4252; }
+      .m { font-size: 12.5px; fill: #646b7d; }
+      .num { font-size: 16px; font-weight: 700; fill: #ffffff; }
+      .flow { stroke: #5b4bff; stroke-width: 2.5; fill: none; }
+      .flow-l { font-size: 12.5px; fill: #5b4bff; font-weight: 600; }
+      .dash { stroke-dasharray: 7 6; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="800" rx="24" fill="#f6f7fb"/>
+  <text x="1150" y="58" text-anchor="start" class="h" style="font-size:26px">ארכיטקטורה · Intent AI Demo</text>
+  <text x="1150" y="86" text-anchor="start" class="m" style="font-size:14px">איך משוב של משתמש עובר מהאתר, דרך השרת ומסד הנתונים, אל הדשבורד ואל הניתוח</text>
+
+  <!-- Row 1: sites → API → DB (right to left) -->
+  <g>
+    <rect class="box" x="820" y="120" width="330" height="200" rx="18"/>
+    <circle cx="1118" cy="152" r="17" fill="#5b4bff"/><text x="1118" y="158" text-anchor="middle" class="num" direction="ltr">1</text>
+    <text x="1090" y="160" text-anchor="start" class="h">סימולציה על אתרים</text>
+    <text x="1125" y="200" text-anchor="start" class="b">5 אתרים ישראליים (שופרסל, אל על, ynet,</text>
+    <text x="1125" y="222" text-anchor="start" class="b">סופר־פארם, פרטנר) עם ווידג׳ט משוב:</text>
+    <text x="1125" y="244" text-anchor="start" class="b">🎤 קול עם תמלול · ✍️ טקסט עם דירוג</text>
+    <text x="1125" y="290" text-anchor="start" class="m">presentation/simulation/public</text>
+  </g>
+  <g>
+    <rect class="box" x="435" y="120" width="330" height="200" rx="18"/>
+    <circle cx="733" cy="152" r="17" fill="#5b4bff"/><text x="733" y="158" text-anchor="middle" class="num" direction="ltr">2</text>
+    <text x="705" y="160" text-anchor="start" class="h">שרת ו־API</text>
+    <text x="740" y="200" text-anchor="start" class="b">Node + Express · POST /api/feedback</text>
+    <text x="740" y="222" text-anchor="start" class="b">ניתוח: סנטימנט ונושא · זיהוי משתמש:</text>
+    <text x="740" y="244" text-anchor="start" class="b">דפדפן, מדינה, IP מוצפן (HMAC)</text>
+    <text x="740" y="290" text-anchor="start" class="m">presentation/simulation/src</text>
+  </g>
+  <g>
+    <rect class="tint" x="50" y="120" width="330" height="200" rx="18"/>
+    <circle cx="348" cy="152" r="17" fill="#5b4bff"/><text x="348" y="158" text-anchor="middle" class="num" direction="ltr">3</text>
+    <text x="320" y="160" text-anchor="start" class="h">TEST DB</text>
+    <text x="355" y="200" text-anchor="end" class="b" direction="ltr">SQLite · node:sqlite · WAL</text>
+    <text x="355" y="222" text-anchor="end" class="b" direction="ltr">organizations → products →</text>
+    <text x="355" y="244" text-anchor="end" class="b" direction="ltr">end_users → feedback + audio</text>
+    <text x="355" y="290" text-anchor="start" class="m">simulation/data/test.db</text>
+  </g>
+  <path class="flow" d="M 818 220 L 770 220" marker-end="url(#arrow)"/>
+  <text x="794" y="208" text-anchor="middle" class="flow-l">משוב</text>
+  <path class="flow" d="M 433 220 L 385 220" marker-end="url(#arrow)"/>
+  <text x="409" y="208" text-anchor="middle" class="flow-l">שמירה</text>
+
+  <!-- Row 2 -->
+  <g>
+    <rect class="box" x="820" y="380" width="330" height="160" rx="18"/>
+    <text x="1125" y="418" text-anchor="start" class="h">🔒 ציות ופרטיות</text>
+    <text x="1125" y="452" text-anchor="start" class="b">הסכמה לפני איסוף · הורדה ומחיקה</text>
+    <text x="1125" y="474" text-anchor="start" class="b">מחיקה אוטומטית אחרי 90 יום · GPC</text>
+    <text x="1125" y="512" text-anchor="start" class="m">לפי compliance/ של המוצר</text>
+  </g>
+  <g>
+    <rect class="box" x="435" y="380" width="330" height="160" rx="18"/>
+    <circle cx="733" cy="412" r="17" fill="#5b4bff"/><text x="733" y="418" text-anchor="middle" class="num" direction="ltr">4</text>
+    <text x="705" y="420" text-anchor="start" class="h">דשבורד לפי לקוח</text>
+    <text x="740" y="454" text-anchor="start" class="b">משובים, משתמשים ייחודיים, סנטימנט,</text>
+    <text x="740" y="476" text-anchor="start" class="b">נושא מוביל · סינון לכל אתר</text>
+    <text x="740" y="512" text-anchor="end" class="m" direction="ltr">dashboard.html?org=site</text>
+  </g>
+  <g>
+    <rect class="box" x="50" y="380" width="330" height="160" rx="18"/>
+    <circle cx="348" cy="412" r="17" fill="#5b4bff"/><text x="348" y="418" text-anchor="middle" class="num" direction="ltr">5</text>
+    <text x="320" y="420" text-anchor="start" class="h">נתונים לניתוח</text>
+    <text x="355" y="454" text-anchor="start" class="b">מחברת Jupyter: רשומות גולמיות</text>
+    <text x="355" y="476" text-anchor="start" class="b">ותרשימי מגמות · SOURCE: TEST</text>
+    <text x="355" y="512" text-anchor="start" class="m">notebooks/raw_data.ipynb · קריאה בלבד</text>
+  </g>
+  <path class="flow" d="M 600 322 L 600 376" marker-end="url(#arrow)"/>
+  <text x="612" y="355" text-anchor="end" class="flow-l" direction="ltr">GET /api/feedback · /api/stats</text>
+  <path class="flow" d="M 215 322 L 215 376" marker-end="url(#arrow)"/>
+  <text x="227" y="355" text-anchor="end" class="flow-l" direction="ltr">mode=ro</text>
+  <path class="flow dash" d="M 985 322 L 985 376" marker-end="url(#arrow)"/>
+
+  <!-- Row 3: product code + live demo -->
+  <g>
+    <rect x="620" y="600" width="530" height="160" rx="18" fill="#14122b"/>
+    <text x="1125" y="640" text-anchor="start" class="h" style="fill:#ffffff">🌐 דמו חי · GitHub Pages</text>
+    <text x="1125" y="674" text-anchor="start" class="b" style="fill:#c9c3ff">אותם עמודים ואותו ווידג׳ט, עם API שרץ בדפדפן,</text>
+    <text x="1125" y="696" text-anchor="start" class="b" style="fill:#c9c3ff">אתרי דמה ונתונים סינתטיים · משוב נשמר רק אצל המבקר</text>
+    <text x="1125" y="734" text-anchor="start" class="m" style="fill:#9a93d9">docs/ · static-api.js · data/seed.json</text>
+  </g>
+  <g>
+    <rect x="50" y="600" width="530" height="160" rx="18" fill="none" stroke="#9aa0b4" stroke-width="2" class="dash"/>
+    <text x="555" y="640" text-anchor="start" class="h">🧩 קוד המוצר המלא</text>
+    <text x="555" y="674" text-anchor="start" class="b">דשבורד Next.js · API ב־Express · ווידג׳ט · Postgres/Prisma</text>
+    <text x="555" y="696" text-anchor="start" class="b">תמלול Whisper · ניתוח Claude · Jira ו־Slack</text>
+    <text x="555" y="734" text-anchor="start" class="m">בריפו הארגוני של aibasicintent-dev, בתיקיית code · לא כלול כאן</text>
+  </g>
+  <path class="flow dash" d="M 315 598 L 315 546" marker-end="url(#arrow)"/>
+  <text x="327" y="578" text-anchor="end" class="flow-l">אותו מודל נתונים</text>
+</svg>

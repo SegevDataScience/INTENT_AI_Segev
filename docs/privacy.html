@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intent AI · פרטיות בהדגמה</title>
+  <script type="module" src="static-api.js"></script>
+  <link rel="stylesheet" href="demo.css">
+  <style>
+    .doc { max-width: 760px; }
+    .doc h1 { font-size: 26px; margin: 0 0 6px; }
+    .doc h2 { font-size: 18px; margin: 28px 0 8px; }
+    .doc p, .doc li { line-height: 1.75; }
+    .doc .meta { color: var(--muted); font-size: 13px; }
+    .doc table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+    .doc td, .doc th { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: right; vertical-align: top; }
+    .callout { background: #ecebff; border-radius: var(--radius); padding: 12px 14px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <a href="index.html">→ כל האתרים</a>
+    <span class="title">Intent AI · הודעת פרטיות להדגמה</span>
+    <span></span>
+  </div>
+  <main class="wrap doc">
+    <h1>הודעת פרטיות — סימולציית Intent AI</h1>
+    <p class="meta">גרסה <span id="ver">2026-11-06</span> · חלה על ההדגמה המקומית בלבד</p>
+
+    <p class="callout">זוהי הדגמה פנימית שרצה על המחשב המקומי. האתרים מוצגים כצילומי מסך, ואין קשר בין Intent AI לבין בעלי האתרים.
+      למדיניות הפרטיות של המוצר המלא ראו את <code>compliance/templates/PRIVACY_POLICY_HE.md</code> בפרויקט.</p>
+
+    <h2>מה נאסף</h2>
+    <table>
+      <tr><th>נתון</th><th>מתי</th><th>למה</th></tr>
+      <tr><td>תוכן המשוב בטקסט, ודירוג 1–5</td><td>כששולחים משוב טקסט</td><td>הבנת חוויית המשתמש</td></tr>
+      <tr><td>הקלטת קול ותמלול שלה</td><td>כשמקליטים ושולחים</td><td>משוב בקול</td></tr>
+      <tr><td>כתובת העמוד, ללא פרמטרים</td><td>עם כל משוב</td><td>לדעת על איזה עמוד המשוב</td></tr>
+      <tr><td>מזהה אנונימי אקראי של הדפדפן</td><td>עם כל משוב</td><td>לקבץ משובים של אותו משתמש ולאפשר לו לממש זכויות</td></tr>
+      <tr><td>סוג דפדפן, מערכת הפעלה וסוג מכשיר (תמצית בלבד, לא מחרוזת ה-User-Agent המלאה)</td><td>עם כל משוב</td><td>להבחין בין כותבים שונים ולהבין באילו מכשירים משתמשים</td></tr>
+      <tr><td>שפת הדפדפן ואזור הזמן, ומדינה משוערת מהם</td><td>עם כל משוב</td><td>להבחין בין כותבים ולהבין מאיפה מגיע המשוב (ללא איתור מיקום)</td></tr>
+      <tr><td>טביעה מוצפנת חד-כיוונית של כתובת ה-IP (HMAC-SHA256 עם מפתח סודי)</td><td>עם כל משוב</td><td>לזהות אם משובים הגיעו מאותה כתובת, בלי לשמור את הכתובת עצמה</td></tr>
+    </table>
+    <p>לא נאספים שם, אימייל או טלפון, וכתובת ה-IP עצמה לא נשמרת (רק טביעה מוצפנת שלה). אין זיהוי קולי של הדובר ואין זיהוי רגשות מהקול — הסנטימנט והנושא מזוהים לפי מילות מפתח בטקסט.</p>
+
+    <h2>בסיס חוקי</h2>
+    <p>הסכמה מפורשת (GDPR סעיף 6(1)(a) ו-7; חוק הגנת הפרטיות, תיקון 13). שום נתון לא נאסף לפני שסימנתם הסכמה בחלון המשוב. גרסת ההודעה שהסכמתם לה ומועד ההסכמה נשמרים עם כל משוב.</p>
+
+    <h2>צדדים שלישיים והעברה לחו״ל</h2>
+    <p>התמלול האוטומטי מתבצע על ידי שירות זיהוי הדיבור המובנה בדפדפן: <strong>Google</strong> ב-Chrome ו-<strong>Microsoft</strong> ב-Edge. בעת הקלטה, הקול נשלח לשרתים שלהם, שעשויים להיות מחוץ לישראל (בין היתר בארה״ב). אם אינכם מעוניינים בכך — השתמשו במשוב בטקסט.</p>
+
+    <h2>שמירה ומחיקה</h2>
+    <p>משובים והקלטות נשמרים <strong><span id="days">90</span> ימים</strong> ונמחקים אוטומטית לאחר מכן. הנתונים נשמרים בקובץ מקומי על המחשב שמריץ את ההדגמה ואינם מועלים לשרת או ל-git.</p>
+
+    <h2>הזכויות שלכם</h2>
+    <ul>
+      <li><strong>עיון וניוד</strong> — "⬇ הורדת הנתונים שלי" בתחתית חלון המשוב מוריד קובץ JSON עם כל מה שנשמר עליכם באותו אתר.</li>
+      <li><strong>מחיקה</strong> — "🗑 מחיקת הנתונים שלי" מוחק לצמיתות את המשובים וההקלטות שלכם באותו אתר.</li>
+      <li><strong>ביטול הסכמה</strong> — "ביטול הסכמה" עוצר איסוף נוסף; כדי לשלוח שוב תתבקשו להסכים מחדש.</li>
+      <li><strong>Global Privacy Control</strong> — אם הדפדפן שולח GPC, המזהה האנונימי לא נשמר בדפדפן ונמחק עם סגירת הדף.</li>
+    </ul>
+  </main>
+  <script type="module">
+    try {
+      const c = await fetch('api/consent').then(r => r.json());
+      document.getElementById('ver').textContent = c.version;
+      document.getElementById('days').textContent = c.retentionDays;
+    } catch { /* static defaults remain */ }
+  </script>
+</body>
+</html>
