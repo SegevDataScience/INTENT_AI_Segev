@@ -105,4 +105,14 @@ td audio { width: 200px; height: 34px; }
 .empty-state { padding: 40px; text-align: center; color: var(--muted); }
 .nowrap { white-space: nowrap; }
 
+/* ---------- phones ---------- */
+@media (max-width: 640px) {
+  .demo-bar { flex-wrap: wrap; gap: 6px 12px; font-size: 13px; padding: 8px 12px; }
+  .demo-bar .title { order: 3; flex-basis: 100%; white-space: normal; font-size: 13px; }
+  .hero h1 { font-size: 22px; }
+  .wrap { padding: 20px 12px 48px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat .value { font-size: 22px; }
+}
+
 .static-note { background: #fff4d6; color: #6b4e00; text-align: center; font-size: 13px; padding: 6px 12px; }

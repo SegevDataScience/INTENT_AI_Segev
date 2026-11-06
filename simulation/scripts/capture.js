@@ -3,7 +3,7 @@
 //        npm run capture shufersal  (one site)
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { existsSync, mkdirSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, statSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { loadSites } from '../src/seed.js';
@@ -53,19 +53,28 @@ for (const site of sites) {
     continue;
   }
   try {
-    execFileSync(browser, [
-      '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run',
-      `--user-data-dir=${join(tmpdir(), 'intent-sim-capture')}`,
-      '--lang=he-IL', '--window-size=1440,4000', '--virtual-time-budget=20000',
-      `--screenshot=${out}`, site.url,
-    ], { stdio: 'inherit', timeout: 120000 });
-    if (!existsSync(out) || statSync(out).size === 0) throw new Error('no screenshot written');
-    // A real full-page capture is usually >500KB; tiny files are typically bot-check or error pages.
-    if (statSync(out).size < 200 * 1024) {
-      console.warn(`  WARNING: screenshot is only ${Math.round(statSync(out).size / 1024)}KB — the site may block automated capture.`);
-      console.warn(`  Open ${out} to check. If blocked, capture it manually (see README) or delete the file to show the fallback page.`);
-    } else {
-      console.log('  ok');
+    // Desktop (1440 px) and phone (390 px) widths. Same browser identity: the site's responsive layout
+    // adapts to the width; we never pretend to be a different device or browser.
+    for (const [file, width, minKb] of [[out, 1440, 200], [join(outDir, `${site.slug}.m.png`), 390, 80]]) {
+      const started = Date.now();
+      try {
+        execFileSync(browser, [
+        '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run',
+        `--user-data-dir=${join(tmpdir(), 'intent-sim-capture')}`,
+        '--lang=he-IL', `--window-size=${width},${width > 1000 ? 4000 : 2600}`, '--virtual-time-budget=20000',
+        `--screenshot=${file}`, site.url,
+        ], { stdio: 'ignore', timeout: 120000 });
+      } catch (err) {
+        // Headless Edge sometimes crashes on exit *after* writing the screenshot — judge by the file, not the exit code.
+        if (!existsSync(file) || statSync(file).mtimeMs < started - 1000) throw err;
+      }
+      if (!existsSync(file) || statSync(file).size === 0) throw new Error(`no screenshot written (${width}px)`);
+      const kb = Math.round(statSync(file).size / 1024);
+      if (kb < minKb && width < 1000) {
+        rmSync(file); // a blank phone capture is worse than none: the page falls back to the desktop screenshot
+        console.warn(`  WARNING: ${width}px screenshot was blank (${kb}KB) — removed; phones will see the desktop screenshot.`);
+      } else if (kb < minKb) console.warn(`  WARNING: ${width}px screenshot is only ${kb}KB — the site may block automated capture. Check ${file}`);
+      else console.log(`  ok ${width}px (${kb}KB)`);
     }
   } catch (err) {
     failed++;

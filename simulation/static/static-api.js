@@ -69,6 +69,7 @@ async function handle(route, url, init) {
   const siteByKey = key => seed.sites.find(s => seed.apiKeys[s.slug] === key);
 
   if (route === '/api/sites' && method === 'GET') return json(seed.sites);
+  if (route === '/api/mode' && method === 'GET') return json({ share: false, admin: false });
   let m = /^\/api\/sites\/([^/]+)\/widget-config$/.exec(route);
   if (m && method === 'GET') return seed.apiKeys[m[1]] ? json({ apiKey: seed.apiKeys[m[1]] }) : bad('site not found', 404);
   if (route === '/api/consent' && method === 'GET') return json(seed.consent);
@@ -104,6 +105,7 @@ async function handle(route, url, init) {
       language: typeof b.locale === 'string' ? b.locale.slice(0, 35) : null,
       timeZone: typeof b.timeZone === 'string' ? b.timeZone.slice(0, 64) : null,
       country: countryFrom(b.timeZone, b.locale), ipHash: null, // a static site never sees the visitor's IP
+      feedbackLang: ['he', 'en', 'ar'].includes(b.lang) ? b.lang : null,
       audioData: b.type === 'voice' ? b.audioBase64 : undefined, audioMime: b.type === 'voice' ? mime : undefined,
     };
     const list = loadLocal();

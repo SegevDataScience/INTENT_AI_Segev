@@ -27,7 +27,7 @@ const toRelative = html => html
   .replace(/(sites\/\$\{encodeURIComponent\((?:s\.slug|slug)\)\})\.png/g, '$1.svg');
 const inject = html => html.replace('</title>', '</title>\n  <script type="module" src="static-api.js"></script>');
 
-for (const page of ['index.html', 'site.html', 'dashboard.html', 'privacy.html']) {
+for (const page of ['index.html', 'site.html', 'dashboard.html', 'privacy.html']) { // share.html is local-only
   let html = inject(toRelative(readFileSync(join(SIM, 'public', page), 'utf8')));
   if (page === 'dashboard.html') {
     html = html.replace('src: `audio/${encodeURIComponent(f.audioPath)}`', 'src: window.audioUrl(f.audioPath)');
@@ -38,6 +38,7 @@ for (const page of ['index.html', 'site.html', 'dashboard.html', 'privacy.html']
         'האתרים כאן הם אתרי דמה עם נתונים סינתטיים. בגרסה המקומית ההדגמה רצה על צילומי מסך של אתרים ישראליים אמיתיים.');
   }
   if (page === 'site.html') { // the static demo uses mock pages, so say so instead of "screenshot of the live site"
+    html = html.replace("const EXT = '.png';", "const EXT = '.svg';");
     html = html.replace('(צילום מסך · הדגמה בלבד, ללא קשר ל${site.name})', '(אתר דמה להדגמה)');
   }
   writeFileSync(join(OUT, page), html);

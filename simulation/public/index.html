@@ -26,14 +26,23 @@
     const grid = document.getElementById('sites');
     const el = (tag, props = {}, ...kids) => { const n = document.createElement(tag); Object.assign(n, props); n.append(...kids.filter(Boolean)); return n; };
 
+    // Admin key (share mode): arrives once via ?admin=… and is kept on this device only.
+    const ADMIN = (() => { const k = new URLSearchParams(location.search).get('admin'); try { if (k) localStorage.setItem('iai_admin', k); return k || localStorage.getItem('iai_admin'); } catch { return k; } })();
+    const adminHeaders = ADMIN ? { 'X-Admin-Token': ADMIN } : {};
+    const mode = await fetch('/api/mode', { headers: adminHeaders }).then(r => r.json()).catch(() => ({ share: false, admin: false }));
+    const canSeeData = !mode.share || mode.admin;
     try {
       const [sites, stats] = await Promise.all([
         fetch('/api/sites').then(r => r.json()),
-        fetch('/api/stats').then(r => r.json()),
+        canSeeData ? fetch('/api/stats', { headers: adminHeaders }).then(r => (r.ok ? r.json() : [])) : Promise.resolve([]),
       ]);
+      if (!canSeeData) {
+        document.querySelector('.demo-bar a[href="/dashboard.html"]')?.remove();
+        document.querySelector('.hero p').textContent = 'בחרו אתר, לחצו על כפתור המשוב בפינה ושלחו משוב בקול או בטקסט, בעברית, באנגלית או בערבית.';
+      }
       const bySlug = Object.fromEntries(stats.map(s => [s.slug, s]));
       const total = stats.reduce((a, s) => a + s.total, 0);
-      document.getElementById('summary').textContent = `${sites.length} אתרים · ${total} משובים ב-TEST DB`;
+      document.getElementById('summary').textContent = canSeeData ? `${sites.length} אתרים · ${total} משובים ב-TEST DB` : `${sites.length} אתרים`;
 
       grid.replaceChildren(...sites.map(s => {
         const st = bySlug[s.slug] || { total: 0, voice: 0, text: 0 };
@@ -45,7 +54,7 @@
         img.onload = () => { thumb.replaceChildren(); thumb.style.backgroundImage = `url("${img.src}")`; };
         img.src = `/sites/${encodeURIComponent(s.slug)}.png`;
 
-        const count = el('span', { className: 'count', textContent: st.total ? `${st.total} משובים (${st.voice} קול · ${st.text} טקסט)` : 'עדיין אין משובים' });
+        const count = canSeeData ? el('span', { className: 'count', textContent: st.total ? `${st.total} משובים (${st.voice} קול · ${st.text} טקסט)` : 'עדיין אין משובים' }) : null;
         return el('article', { className: 'card' },
           thumb,
           el('div', { className: 'body' },
@@ -56,7 +65,7 @@
             count,
             el('div', { className: 'actions' },
               el('a', { className: 'btn primary', href: siteHref, textContent: 'כניסה ומשוב' }),
-              el('a', { className: 'btn', href: `/dashboard.html?org=${encodeURIComponent(s.slug)}`, textContent: '📊 דשבורד' }))));
+              canSeeData ? el('a', { className: 'btn', href: `/dashboard.html?org=${encodeURIComponent(s.slug)}`, textContent: '📊 דשבורד' }) : null)));
       }));
       if (!sites.length) grid.textContent = 'אין אתרים מוגדרים ב-sites.json';
     } catch {

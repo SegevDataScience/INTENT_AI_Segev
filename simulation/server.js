@@ -19,7 +19,12 @@ const secretFile = join(root, 'data', '.ip-hash-secret');
 const ipHashSecret = process.env.IP_HASH_SECRET ||
   (existsSync(secretFile) ? readFileSync(secretFile, 'utf8').trim()
     : (() => { const k = randomBytes(32).toString('hex'); writeFileSync(secretFile, k, { mode: 0o600 }); return k; })());
-const app = createApp({ db, audioDir, publicDir: join(root, 'public'), retentionDays, ipHashSecret });
+// Share mode (npm run share): public tunnel link; data endpoints need the admin token.
+const shareMode = process.env.SHARE_MODE === '1';
+const adminToken = process.env.ADMIN_TOKEN || null;
+if (shareMode && !adminToken) { console.error('SHARE_MODE requires ADMIN_TOKEN'); process.exit(1); }
+const app = createApp({ db, audioDir, publicDir: join(root, 'public'), retentionDays, ipHashSecret, shareMode, adminToken,
+  shareInfoPath: join(root, 'data', 'share.json') });
 
 // Retention: purge expired feedback + recordings now and every 24h.
 const purge = () => {
@@ -36,4 +41,8 @@ app.listen(port, host, () => {
   console.log(`Intent AI simulation → http://localhost:${port}`);
   console.log(`Dashboard          → http://localhost:${port}/dashboard.html`);
   console.log(`TEST DB            → ${join(root, 'data', 'test.db')}  (retention: ${retentionDays} days)`);
+  if (shareMode) console.log('Share mode         → dashboard and data require the admin token');
+  if (process.env.OPEN_BROWSER === '1' && process.platform === 'win32') {
+    import('node:child_process').then(({ spawn }) => spawn('cmd', ['/c', 'start', '', `http://localhost:${port}`], { detached: true, stdio: 'ignore' }).unref());
+  }
 });

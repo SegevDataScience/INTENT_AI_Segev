@@ -15,12 +15,23 @@ npm start
 
 | Page | Address |
 |---|---|
-| Main page: choose a site (Shufersal, El Al, ynet, Super-Pharm, Partner) | http://localhost:4000 |
+| Main page: choose a site (Shufersal, El Al, ynet, Super-Pharm, Partner, Ivory, FOX, HOT) | http://localhost:4000 |
 | One site's page, e.g. Shufersal | http://localhost:4000/site.html?s=shufersal |
 | Dashboard for all sites | http://localhost:4000/dashboard.html |
 | Dashboard filtered to one site | http://localhost:4000/dashboard.html?org=elal |
 
-Site slugs: `shufersal`, `elal`, `ynet`, `superpharm`, `partner`.
+Site slugs: `shufersal`, `elal`, `ynet`, `superpharm`, `partner`, `ivory`, `fox`, `hot`. Each site is captured at desktop width (1440) and phone width (390, `<slug>.m.png`); a phone screen gets the phone screenshot. If the phone capture comes out blank (Super-Pharm), it's deleted and the desktop screenshot is shown instead.
+
+## Double-click launch and sharing a link
+- **`presentation/start-demo.bat`:** a local launch. The first run installs dependencies and takes the screenshots. It then starts the server and opens the browser.
+- **`presentation/share-demo.bat`** (or `npm run share`): a public link through Cloudflare Tunnel (`cloudflared` is downloaded once from Cloudflare's GitHub into `tools/`, which is git-ignored). The server runs in **share mode**:
+  - Visitors get only the sites and the widget. `/api/feedback`, `/api/stats` and `/audio` require `X-Admin-Token` (or `?admin=`), stored in `data/.admin-token`.
+  - The owner's page (`/share.html?admin=…`) shows the link, a QR code, and buttons for WhatsApp and email.
+  - The visitor IP is taken from `CF-Connecting-IP` (and stored only as a hash). There's a rate limit of 20 feedback items per 10 minutes per visitor.
+  - The link changes on every run and stops working when the window closes. The data stays local.
+
+## Languages
+The widget works in Hebrew, English and Arabic, with a switcher in the header, `?lang=he|en|ar`, or the browser language. Text direction, transcription (`he-IL` / `en-US` / `ar-IL`), the privacy notice and the keyword analysis follow the language. The chosen language is saved with each feedback (`feedback_lang`) and shown in the dashboard.
 
 ### Sites that block automated screenshots
 Some sites block headless capture: Bank Hapoalim, Israel Railways and Yad2 were tried and blocked, so the list uses sites that allow it. If a site you add is blocked, its page shows a fallback page and the feedback button works normally. To add a screenshot by hand: open the site in Edge, press `Ctrl+Shift+S`, choose "Capture full page", and save it as `public/sites/<slug>.png`. `npm run capture` warns when a screenshot is suspiciously small.

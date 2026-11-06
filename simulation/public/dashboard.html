@@ -40,6 +40,10 @@
     const $ = id => document.getElementById(id);
     const CATEGORY = { checkout: 'תשלום וקופה', travel: 'טיסות ונסיעה', delivery: 'משלוחים', prices: 'מחירים', billing: 'חיובים וחשבונות', connectivity: 'קליטה ואינטרנט', pharmacy: 'מרשמים ותרופות', content: 'תוכן ופרסומות', site: 'האתר', service: 'שירות', other: 'אחר' };
     const SENTIMENT = { positive: 'חיובי', neutral: 'ניטרלי', negative: 'שלילי' };
+    // Admin key (share mode): arrives once via ?admin=… and is kept on this device only.
+    const ADMIN = (() => { const k = new URLSearchParams(location.search).get('admin'); try { if (k) localStorage.setItem('iai_admin', k); return k || localStorage.getItem('iai_admin'); } catch { return k; } })();
+    const adminHeaders = ADMIN ? { 'X-Admin-Token': ADMIN } : {};
+    const LANG_LABEL = { he: 'עב', en: 'EN', ar: 'ع' };
     let selected = new URLSearchParams(location.search).get('org') || '';
     let lastKey = '';
 
@@ -99,7 +103,7 @@
           : el('td', { className: 'content' }, el('span', { className: 'empty', textContent: f.type === 'voice' ? 'ללא תמלול' : '—' }));
         let audio = '—';
         if (f.audioPath) {
-          audio = el('audio', { controls: true, preload: 'none', src: `/audio/${encodeURIComponent(f.audioPath)}` });
+          audio = el('audio', { controls: true, preload: 'none', src: `/audio/${encodeURIComponent(f.audioPath)}${ADMIN ? '?admin=' + encodeURIComponent(ADMIN) : ''}` });
         }
         let page = '—';
         if (f.pageUrl) {
@@ -111,7 +115,7 @@
           el('td', { className: 'nowrap', textContent: f.orgName }),
           el('td', { className: 'user', title: `מזהה: ${f.endUserId}${f.ipHash ? ' · IP hash: ' + f.ipHash : ''}` },
             el('div', { className: 'uid', textContent: '#' + String(f.endUserId).slice(0, 6) }),
-            el('div', { className: 'ctx', textContent: [f.browser, f.os, f.device, f.country].filter(Boolean).join(' · ') || '—' })),
+            el('div', { className: 'ctx', textContent: [f.feedbackLang && LANG_LABEL[f.feedbackLang], f.browser, f.os, f.device, f.country].filter(Boolean).join(' · ') || '—' })),
           el('td', {}, el('span', { className: 'pill type', textContent: f.type === 'voice' ? '🎤 קול' : '✍️ טקסט' })),
           content,
           el('td', {}, audio),
@@ -126,10 +130,17 @@
     async function load() {
       try {
         const q = selected ? `?org=${encodeURIComponent(selected)}` : '';
-        const [stats, rows] = await Promise.all([
-          fetch('/api/stats').then(r => r.json()),
-          fetch(`/api/feedback${q}`).then(r => r.json()),
+        const [statsRes, rowsRes] = await Promise.all([
+          fetch('/api/stats', { headers: adminHeaders }),
+          fetch(`/api/feedback${q}`, { headers: adminHeaders }),
         ]);
+        if (statsRes.status === 401 || rowsRes.status === 401) {
+          $('updated').textContent = 'הקישור הזה משותף, והדשבורד דורש מפתח מנהל. פתחו את קישור המנהל שהודפס בחלון השיתוף.';
+          $('empty').hidden = false;
+          $('empty').textContent = '🔒 נדרש מפתח מנהל';
+          return;
+        }
+        const [stats, rows] = await Promise.all([statsRes.json(), rowsRes.json()]);
         $('updated').textContent = `עודכן ${new Date().toLocaleTimeString('he-IL')}`;
         const key = JSON.stringify([selected, stats, rows]);
         if (key === lastKey) return;

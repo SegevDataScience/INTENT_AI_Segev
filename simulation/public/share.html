@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intent AI · שיתוף</title>
+  <link rel="stylesheet" href="/demo.css">
+  <style>
+    .share { max-width: 820px; }
+    .share-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+    .share-card img { width: 220px; height: 220px; border-radius: 12px; border: 1px solid var(--border); }
+    .link-row { display: flex; gap: 8px; margin: 10px 0 16px; flex-wrap: wrap; }
+    .link-row input { flex: 1; min-width: 220px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font: inherit; direction: ltr; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .note { color: var(--muted); font-size: 14px; line-height: 1.7; margin-top: 20px; }
+    .state { padding: 40px; text-align: center; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+    @media (max-width: 640px) { .share-card { grid-template-columns: 1fr; justify-items: center; } }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <a href="/">→ כל האתרים</a>
+    <span class="title">Intent AI · שיתוף ההדגמה <span class="badge">רק אצלך</span></span>
+    <a href="/dashboard.html" id="dash">הדשבורד שלך ←</a>
+  </div>
+  <main class="wrap share">
+    <h1 style="margin:0 0 6px">שלחו את ההדגמה לכל מי שתרצו</h1>
+    <p style="color:var(--muted);margin:0 0 24px">מי שמקבל את הקישור רואה את האתרים ואת כפתור המשוב, מטלפון או ממחשב. המשוב שלו נשמר כאן, במחשב שלך, ומופיע בדשבורד.</p>
+    <div id="content" class="state">טוען…</div>
+    <p class="note">
+      🔒 מבקרים <strong>לא</strong> רואים את הדשבורד או את הנתונים, רק את האתרים והכפתור. רק המחשב הזה מחזיק את מפתח המנהל.<br>
+      ⏱️ הקישור עובד כל עוד חלון השיתוף פתוח. כשסוגרים אותו, הקישור מפסיק לעבוד והנתונים נשארים אצלך. בכל הפעלה נוצר קישור חדש.<br>
+      🎤 בטלפון, הדפדפן יבקש אישור למיקרופון בהקלטה הראשונה.
+    </p>
+  </main>
+  <script type="module">
+    const ADMIN = (() => { const k = new URLSearchParams(location.search).get('admin'); try { if (k) localStorage.setItem('iai_admin', k); return k || localStorage.getItem('iai_admin'); } catch { return k; } })();
+    const box = document.getElementById('content');
+    const el = (tag, props = {}, ...kids) => { const n = document.createElement(tag); Object.assign(n, props); n.append(...kids.filter(Boolean)); return n; };
+    if (ADMIN) document.getElementById('dash').href = `/dashboard.html?admin=${encodeURIComponent(ADMIN)}`;
+
+    const res = await fetch('/api/share-info', { headers: ADMIN ? { 'X-Admin-Token': ADMIN } : {} }).catch(() => null);
+    if (!res || res.status === 404) {
+      box.textContent = 'השיתוף לא פעיל כרגע. הפעילו את share-demo.bat (או npm run share) כדי ליצור קישור.';
+    } else if (res.status === 401) {
+      box.textContent = '🔒 העמוד הזה מיועד לבעל ההדגמה בלבד.';
+    } else {
+      const { visitorUrl, qr } = await res.json();
+      const msg = `היי! אשמח לפידבק שלך על ההדגמה של Intent AI: בוחרים אתר, לוחצים על "משוב" ומשאירים משוב בקול או בטקסט, בעברית, אנגלית או ערבית 🙏\n${visitorUrl}`;
+      const input = el('input', { value: visitorUrl, readOnly: true, ariaLabel: 'קישור למבקרים' });
+      const copy = el('button', { className: 'btn primary', type: 'button', textContent: '📋 העתקה' });
+      copy.onclick = async () => {
+        try { await navigator.clipboard.writeText(visitorUrl); } catch { input.select(); document.execCommand('copy'); }
+        copy.textContent = '✓ הועתק';
+        setTimeout(() => { copy.textContent = '📋 העתקה'; }, 1600);
+      };
+      box.className = 'share-card';
+      box.replaceChildren(
+        el('div', {},
+          el('strong', { textContent: 'הקישור למבקרים' }),
+          el('div', { className: 'link-row' }, input, copy),
+          el('div', { className: 'actions' },
+            el('a', { className: 'btn', href: `https://wa.me/?text=${encodeURIComponent(msg)}`, target: '_blank', rel: 'noopener', textContent: '💬 WhatsApp' }),
+            el('a', { className: 'btn', href: `mailto:?subject=${encodeURIComponent('הדגמה של Intent AI')}&body=${encodeURIComponent(msg)}`, textContent: '✉️ אימייל' }),
+            el('a', { className: 'btn', href: visitorUrl, target: '_blank', rel: 'noopener', textContent: '🌐 פתיחה' }))),
+        el('img', { src: qr, alt: 'קוד QR לסריקה בטלפון' }));
+    }
+  </script>
+</body>
+</html>

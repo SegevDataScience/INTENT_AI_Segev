@@ -1,5 +1,5 @@
 import express from 'express';
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { analyze } from './analyze.js';
@@ -26,12 +26,42 @@ function sanitizePageUrl(value) {
 
 const endUserIdFrom = v => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 100) : null);
 
-export function createApp({ db, audioDir, publicDir, retentionDays = DEFAULT_RETENTION_DAYS, ipHashSecret = null }) {
+const FEEDBACK_LANGS = new Set(['he', 'en', 'ar']);
+const isLoopback = a => a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1';
+
+// shareMode: the server is reachable through a public tunnel link. Visitors may only use the widget;
+// reading data (feedback, stats, recordings) requires adminToken. POSTs are rate-limited per visitor.
+export function createApp({ db, audioDir, publicDir, retentionDays = DEFAULT_RETENTION_DAYS, ipHashSecret = null,
+  shareMode = false, adminToken = null, rateLimit = { max: 20, windowMs: 10 * 60 * 1000 }, shareInfoPath = null }) {
   mkdirSync(audioDir, { recursive: true });
   const app = express();
   app.use(express.json({ limit: '10mb' }));
 
   const bad = (res, error, status = 400) => res.status(status).json({ error });
+
+  // Real visitor IP: behind the local cloudflared tunnel the socket is loopback and Cloudflare sets CF-Connecting-IP.
+  const clientIp = req => (shareMode && isLoopback(req.socket.remoteAddress) && req.get('CF-Connecting-IP')) || req.socket.remoteAddress;
+  const isAdmin = req => !adminToken || req.get('X-Admin-Token') === adminToken || req.query.admin === adminToken;
+  const requireAdmin = (req, res, next) => (isAdmin(req) ? next() : bad(res, 'admin token required', 401));
+
+  const hits = new Map(); // visitor → recent POST timestamps (share mode only)
+  const rateLimited = req => {
+    if (!shareMode) return false;
+    const key = clientIp(req) || 'unknown';
+    const now = Date.now();
+    const recent = (hits.get(key) || []).filter(t => now - t < rateLimit.windowMs);
+    recent.push(now);
+    hits.set(key, recent);
+    return recent.length > rateLimit.max;
+  };
+
+  // Owner-only: the current public link + QR (written by scripts/share.js)
+  app.get('/api/share-info', requireAdmin, (req, res) => {
+    if (!shareInfoPath || !existsSync(shareInfoPath)) return bad(res, 'not sharing right now', 404);
+    res.json(JSON.parse(readFileSync(shareInfoPath, 'utf8')));
+  });
+
+  app.get('/api/mode', (req, res) => res.json({ share: !!shareMode, admin: !!adminToken && isAdmin(req) }));
 
   app.get('/api/sites', (req, res) => res.json(store.listSites(db)));
 
@@ -46,6 +76,7 @@ export function createApp({ db, audioDir, publicDir, retentionDays = DEFAULT_RET
   });
 
   app.post('/api/feedback', (req, res) => {
+    if (rateLimited(req)) return bad(res, 'too many requests, try again later', 429);
     const product = store.findProductByApiKey(db, req.get('X-API-Key') || '');
     if (!product) return bad(res, 'invalid api key', 401);
     const b = req.body && typeof req.body === 'object' ? req.body : {};
@@ -91,7 +122,8 @@ export function createApp({ db, audioDir, publicDir, retentionDays = DEFAULT_RET
       pageUrl: sanitizePageUrl(b.pageUrl),
       consentVersion: CONSENT_VERSION, consentAt: new Date().toISOString(),
       ...device, language: locale, timeZone, country: countryFrom({ timeZone, locale }),
-      ipHash: hashIp(req.socket.remoteAddress, ipHashSecret),
+      ipHash: hashIp(clientIp(req), ipHashSecret),
+      feedbackLang: FEEDBACK_LANGS.has(b.lang) ? b.lang : null,
     });
     res.status(201).json(fb);
   });
@@ -125,14 +157,14 @@ export function createApp({ db, audioDir, publicDir, retentionDays = DEFAULT_RET
     res.json({ deleted });
   });
 
-  app.get('/api/feedback', (req, res) => {
+  app.get('/api/feedback', requireAdmin, (req, res) => {
     const orgSlug = typeof req.query.org === 'string' && req.query.org ? req.query.org : null;
     res.json(store.listFeedback(db, { orgSlug }));
   });
 
-  app.get('/api/stats', (req, res) => res.json(store.getStats(db)));
+  app.get('/api/stats', requireAdmin, (req, res) => res.json(store.getStats(db)));
 
-  app.get('/audio/:file', (req, res) => {
+  app.get('/audio/:file', requireAdmin, (req, res) => {
     const file = req.params.file;
     if (!AUDIO_FILE.test(file)) return bad(res, 'invalid file name');
     const path = resolve(join(audioDir, file));

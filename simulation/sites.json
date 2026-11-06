@@ -33,5 +33,26 @@
     "url": "https://www.partner.co.il/",
     "industry": "תקשורת",
     "apiKey": "sim_partner_demo_key"
+  },
+  {
+    "slug": "ivory",
+    "name": "אייבורי",
+    "url": "https://www.ivory.co.il/",
+    "industry": "אלקטרוניקה",
+    "apiKey": "sim_ivory_demo_key"
+  },
+  {
+    "slug": "fox",
+    "name": "FOX",
+    "url": "https://www.fox.co.il/",
+    "industry": "אופנה",
+    "apiKey": "sim_fox_demo_key"
+  },
+  {
+    "slug": "hot",
+    "name": "HOT",
+    "url": "https://www.hot.net.il/",
+    "industry": "טלוויזיה ואינטרנט",
+    "apiKey": "sim_hot_demo_key"
   }
 ]

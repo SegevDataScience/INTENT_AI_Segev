@@ -14,7 +14,7 @@
 .iai-panel {
   position: fixed; left: 20px; bottom: 84px; z-index: 2147483000;
   width: min(380px, calc(100vw - 32px)); max-height: calc(100vh - 110px); overflow-y: auto;
-  background: #fff; color: var(--iai-ink); border-radius: 16px; direction: rtl; text-align: right;
+  background: #fff; color: var(--iai-ink); border-radius: 16px;
   box-shadow: 0 16px 48px rgba(20, 18, 43, .25); border: 1px solid var(--iai-border);
 }
 .iai-panel[hidden] { display: none; }
@@ -33,7 +33,7 @@
 .iai-stars { display: flex; gap: 4px; margin-bottom: 12px; direction: ltr; justify-content: flex-end; }
 .iai-star { background: none; border: 0; font-size: 26px; cursor: pointer; color: #d5d8e0; padding: 0 2px; line-height: 1; }
 .iai-star.on { color: #f2a900; }
-.iai-textarea { width: 100%; min-height: 96px; resize: vertical; padding: 10px; border-radius: 10px; border: 1px solid var(--iai-border); font-size: 14px; color: var(--iai-ink); direction: rtl; }
+.iai-textarea { width: 100%; min-height: 96px; resize: vertical; padding: 10px; border-radius: 10px; border: 1px solid var(--iai-border); font-size: 14px; color: var(--iai-ink); direction: inherit; }
 .iai-count { font-size: 12px; color: var(--iai-muted); text-align: left; margin-top: 4px; }
 
 .iai-send { width: 100%; margin-top: 12px; padding: 11px; border: 0; border-radius: 10px; background: var(--iai-brand); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
@@ -78,3 +78,25 @@
 .iai-footer { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 16px 14px; border-top: 1px solid var(--iai-border); }
 .iai-footer .iai-link { color: var(--iai-muted); }
 .iai-footer .iai-link:hover { color: var(--iai-brand); }
+
+/* ---------- languages: direction follows the chosen language ---------- */
+.iai-panel[dir="rtl"] { direction: rtl; text-align: right; }
+.iai-panel[dir="ltr"] { direction: ltr; text-align: left; }
+.iai-panel[dir="ltr"] .iai-stars { justify-content: flex-start; }
+.iai-panel[dir="ltr"] .iai-count { text-align: right; }
+.iai-head-actions { display: flex; align-items: center; gap: 6px; }
+.iai-langs { display: flex; gap: 2px; background: rgba(255, 255, 255, .16); border-radius: 99px; padding: 2px; }
+.iai-lang { background: transparent; border: 0; color: #fff; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 99px; cursor: pointer; opacity: .8; }
+.iai-lang[aria-pressed="true"] { background: #fff; color: var(--iai-brand); opacity: 1; }
+
+/* ---------- phones: full-width bottom sheet, bigger touch targets ---------- */
+@media (max-width: 560px) {
+  .iai-launcher { left: 12px; bottom: 12px; padding: 12px 16px; }
+  .iai-panel { left: 8px; right: 8px; bottom: 72px; width: auto; max-height: calc(100vh - 88px); border-radius: 16px; }
+  .iai-head { border-radius: 16px 16px 0 0; }
+  .iai-head h2 { font-size: 15px; }
+  .iai-head small { display: none; }
+  .iai-star { font-size: 30px; }
+  .iai-send, .iai-secondary, .iai-tab { min-height: 44px; }
+  .iai-textarea { font-size: 16px; } /* prevents iOS zoom on focus */
+}

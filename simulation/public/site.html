@@ -29,7 +29,14 @@
       try { localStorage.removeItem('iai_end_user'); localStorage.removeItem('iai_consent'); } catch { /* storage unavailable */ }
       location.reload();
     };
-    const slug = new URLSearchParams(location.search).get('s') || 'shufersal';
+    // Admin key (share mode): arrives once via ?admin=… and is kept on this device only.
+    const ADMIN = (() => { const k = new URLSearchParams(location.search).get('admin'); try { if (k) localStorage.setItem('iai_admin', k); return k || localStorage.getItem('iai_admin'); } catch { return k; } })();
+    const adminHeaders = ADMIN ? { 'X-Admin-Token': ADMIN } : {};
+    const mode = await fetch('/api/mode', { headers: adminHeaders }).then(r => r.json()).catch(() => ({ share: false, admin: false }));
+    const canSeeData = !mode.share || mode.admin;
+    if (!canSeeData) document.getElementById('dash-link').hidden = true; // visitors on a shared link don't get the dashboard
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('s') || 'shufersal';
     const showFallback = (title, html) => {
       $('shot').hidden = true;
       $('fallback').hidden = false;
@@ -67,7 +74,13 @@
         a.className = 'btn';
         $('fallback').append(a);
       };
-      shot.src = `/sites/${encodeURIComponent(slug)}.png`;
+      // Phone-width screenshot on small screens, desktop otherwise; fall back between them if one is missing.
+      const EXT = '.png';
+      const base = `/sites/${encodeURIComponent(slug)}`;
+      const candidates = window.matchMedia('(max-width: 700px)').matches ? [base + '.m' + EXT, base + EXT] : [base + EXT, base + '.m' + EXT];
+      const showFallbackShot = shot.onerror;
+      shot.onerror = () => { if (candidates.length) shot.src = candidates.shift(); else showFallbackShot(); };
+      shot.src = candidates.shift();
 
       const { apiKey } = await fetch(`/api/sites/${encodeURIComponent(slug)}/widget-config`).then(r => r.json());
       const s = document.createElement('script');
@@ -75,6 +88,7 @@
       s.dataset.apiKey = apiKey;
       s.dataset.pageUrl = site.url;
       s.dataset.siteName = site.name;
+      if (params.get('lang')) s.dataset.lang = params.get('lang');
       document.body.append(s);
     }
   </script>

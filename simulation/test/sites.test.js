@@ -7,22 +7,22 @@ import { loadSites, seed } from '../src/seed.js';
 
 const SITES = loadSites(join(dirname(fileURLToPath(import.meta.url)), '..', 'sites.json'));
 
-test('sites.json: Shufersal + 4 more, each complete and unique', () => {
-  assert.equal(SITES.length, 5);
+test('sites.json: Shufersal + 7 more, each complete and unique', () => {
+  assert.equal(SITES.length, 8);
   assert.ok(SITES.some(s => s.slug === 'shufersal'));
   for (const s of SITES) {
     for (const k of ['slug', 'name', 'url', 'industry', 'apiKey']) assert.ok(s[k], `${s.slug} missing ${k}`);
     assert.match(s.slug, /^[a-z0-9-]+$/);
     assert.equal(new URL(s.url).protocol, 'https:');
   }
-  assert.equal(new Set(SITES.map(s => s.slug)).size, 5, 'slugs unique');
-  assert.equal(new Set(SITES.map(s => s.apiKey)).size, 5, 'api keys unique');
+  assert.equal(new Set(SITES.map(s => s.slug)).size, SITES.length, 'slugs unique');
+  assert.equal(new Set(SITES.map(s => s.apiKey)).size, SITES.length, 'api keys unique');
 });
 
 test('every site is a separate customer, filterable in the dashboard', () => {
   const db = store.openDb(':memory:');
   seed(db, SITES);
-  assert.equal(store.listSites(db).length, 5);
+  assert.equal(store.listSites(db).length, SITES.length);
   for (const s of SITES) {
     const { productId } = store.findProductByApiKey(db, s.apiKey);
     const endUserId = store.getOrCreateEndUser(db, productId, 'u');
