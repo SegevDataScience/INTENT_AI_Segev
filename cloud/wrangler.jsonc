@@ -1,0 +1,16 @@
+{
+  // Intent AI demo — always-on cloud version (Cloudflare Workers free plan + D1).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "intent-ai-demo",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": ["/api/*", "/audio/*"] },
+  "d1_databases": [
+    // database_id is filled in by `npm run setup` (wrangler d1 create) on first deploy
+    { "binding": "DB", "database_name": "intent-ai-demo", "database_id": "00000000-0000-0000-0000-000000000000" }
+  ],
+  // daily retention purge (90 days)
+  "triggers": { "crons": ["17 3 * * *"] },
+  "observability": { "enabled": true }
+}

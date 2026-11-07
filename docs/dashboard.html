@@ -139,7 +139,7 @@
           el('td', { className: 'user', title: `מזהה: ${f.endUserId}${f.ipHash ? ' · IP hash: ' + f.ipHash : ''}` },
             el('div', { className: 'uid', textContent: '#' + String(f.endUserId).slice(0, 6) }),
             el('div', { className: 'ctx', textContent: [f.device && `${DEVICE_ICON[f.device] || ''} ${DEVICE_LABEL[f.device] || f.device}`, f.feedbackLang && LANG_LABEL[f.feedbackLang], f.browser, f.os, f.country].filter(Boolean).join(' · ') || '—' }),
-            f.channel === 'shared' ? el('div', { className: 'pill type', textContent: '🔗 דרך קישור משותף', style: 'margin-top:4px' }) : null),
+            f.channel === 'shared' || f.channel === 'cloud' ? el('div', { className: 'pill type', textContent: f.channel === 'cloud' ? '🌐 דרך הקישור הקבוע' : '🔗 דרך קישור משותף', style: 'margin-top:4px' }) : null),
           el('td', {}, el('span', { className: 'pill type', textContent: f.type === 'voice' ? '🎤 קול' : '✍️ טקסט' })),
           content,
           el('td', {}, audio),
