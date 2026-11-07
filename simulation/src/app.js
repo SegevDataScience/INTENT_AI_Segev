@@ -124,6 +124,8 @@ export function createApp({ db, audioDir, publicDir, retentionDays = DEFAULT_RET
       ...device, language: locale, timeZone, country: countryFrom({ timeZone, locale }),
       ipHash: hashIp(clientIp(req), ipHashSecret),
       feedbackLang: FEEDBACK_LANGS.has(b.lang) ? b.lang : null,
+      // shared = arrived through the public tunnel link; local = typed on this computer
+      channel: shareMode && isLoopback(req.socket.remoteAddress) && req.get('CF-Connecting-IP') ? 'shared' : 'local',
     });
     res.status(201).json(fb);
   });

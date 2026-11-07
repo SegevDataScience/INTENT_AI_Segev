@@ -52,6 +52,8 @@ function stats(sites, rows) {
       text: count(f => f.type === 'text'), voice: count(f => f.type === 'voice'),
       positive: count(f => f.sentiment === 'positive'), neutral: count(f => f.sentiment === 'neutral'),
       negative: count(f => f.sentiment === 'negative'), categories,
+      mobile: count(f => f.device === 'mobile'), tablet: count(f => f.device === 'tablet'),
+      desktop: count(f => f.device === 'desktop'), shared: count(f => f.channel === 'shared'),
     };
   });
 }
@@ -105,7 +107,7 @@ async function handle(route, url, init) {
       language: typeof b.locale === 'string' ? b.locale.slice(0, 35) : null,
       timeZone: typeof b.timeZone === 'string' ? b.timeZone.slice(0, 64) : null,
       country: countryFrom(b.timeZone, b.locale), ipHash: null, // a static site never sees the visitor's IP
-      feedbackLang: ['he', 'en', 'ar'].includes(b.lang) ? b.lang : null,
+      feedbackLang: ['he', 'en', 'ar'].includes(b.lang) ? b.lang : null, channel: 'local',
       audioData: b.type === 'voice' ? b.audioBase64 : undefined, audioMime: b.type === 'voice' ? mime : undefined,
     };
     const list = loadLocal();

@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS feedback (
   content TEXT, audio_path TEXT, audio_duration_ms INTEGER, rating INTEGER,
   sentiment TEXT, category TEXT, page_url TEXT, created_at TEXT NOT NULL,
   consent_version TEXT, consent_at TEXT,
-  browser TEXT, os TEXT, device TEXT, language TEXT, time_zone TEXT, country TEXT, ip_hash TEXT, feedback_lang TEXT);
+  browser TEXT, os TEXT, device TEXT, language TEXT, time_zone TEXT, country TEXT, ip_hash TEXT, feedback_lang TEXT, channel TEXT);
 CREATE INDEX IF NOT EXISTS idx_feedback_product ON feedback(product_id, created_at);
 `;
 
@@ -50,7 +50,7 @@ export function migrate(db) {
   const fcols = db.prepare('PRAGMA table_info(feedback)').all().map(c => c.name);
   if (!fcols.includes('consent_version')) db.exec('ALTER TABLE feedback ADD COLUMN consent_version TEXT');
   if (!fcols.includes('consent_at')) db.exec('ALTER TABLE feedback ADD COLUMN consent_at TEXT');
-  for (const col of ['browser', 'os', 'device', 'language', 'time_zone', 'country', 'ip_hash', 'feedback_lang']) {
+  for (const col of ['browser', 'os', 'device', 'language', 'time_zone', 'country', 'ip_hash', 'feedback_lang', 'channel']) {
     if (!fcols.includes(col)) db.exec(`ALTER TABLE feedback ADD COLUMN ${col} TEXT`);
   }
 }
@@ -116,7 +116,7 @@ export function getOrCreateEndUser(db, productId, externalId) {
 const FEEDBACK_SELECT = `SELECT f.id, f.type, f.content, f.audio_path AS audioPath,
   f.audio_duration_ms AS audioDurationMs, f.rating, f.sentiment, f.category, f.page_url AS pageUrl,
   f.created_at AS createdAt, f.consent_version AS consentVersion, f.consent_at AS consentAt,
-  f.browser, f.os, f.device, f.language, f.time_zone AS timeZone, f.country, f.ip_hash AS ipHash, f.feedback_lang AS feedbackLang, o.slug AS orgSlug, o.name AS orgName, e.external_id AS endUserId
+  f.browser, f.os, f.device, f.language, f.time_zone AS timeZone, f.country, f.ip_hash AS ipHash, f.feedback_lang AS feedbackLang, f.channel, o.slug AS orgSlug, o.name AS orgName, e.external_id AS endUserId
   FROM feedback f
   JOIN products p ON p.id = f.product_id
   JOIN organizations o ON o.id = p.organization_id
@@ -126,13 +126,13 @@ export function insertFeedback(db, f) {
   const id = f.id ?? randomUUID();
   db.prepare(`INSERT INTO feedback (id, product_id, end_user_id, type, content, audio_path,
     audio_duration_ms, rating, sentiment, category, page_url, created_at, consent_version, consent_at,
-    browser, os, device, language, time_zone, country, ip_hash, feedback_lang)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    browser, os, device, language, time_zone, country, ip_hash, feedback_lang, channel)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(id, f.productId, f.endUserId, f.type, f.content ?? null, f.audioPath ?? null,
       f.audioDurationMs ?? null, f.rating ?? null, f.sentiment ?? null, f.category ?? null,
       f.pageUrl ?? null, f.createdAt ?? now(), f.consentVersion ?? null, f.consentAt ?? null,
       f.browser ?? null, f.os ?? null, f.device ?? null, f.language ?? null, f.timeZone ?? null,
-      f.country ?? null, f.ipHash ?? null, f.feedbackLang ?? null);
+      f.country ?? null, f.ipHash ?? null, f.feedbackLang ?? null, f.channel ?? null);
   return { ...db.prepare(`${FEEDBACK_SELECT} WHERE f.id = ?`).get(id) };
 }
 
@@ -149,7 +149,11 @@ export function getStats(db) {
       COALESCE(SUM(f.type = 'voice'), 0) AS voice,
       COALESCE(SUM(f.sentiment = 'positive'), 0) AS positive,
       COALESCE(SUM(f.sentiment = 'neutral'), 0) AS neutral,
-      COALESCE(SUM(f.sentiment = 'negative'), 0) AS negative
+      COALESCE(SUM(f.sentiment = 'negative'), 0) AS negative,
+      COALESCE(SUM(f.device = 'mobile'), 0) AS mobile,
+      COALESCE(SUM(f.device = 'tablet'), 0) AS tablet,
+      COALESCE(SUM(f.device = 'desktop'), 0) AS desktop,
+      COALESCE(SUM(f.channel = 'shared'), 0) AS shared
     FROM organizations o
     JOIN products p ON p.organization_id = o.id
     LEFT JOIN feedback f ON f.product_id = p.id

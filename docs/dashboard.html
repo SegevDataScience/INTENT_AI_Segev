@@ -24,6 +24,7 @@
     <p class="updated" id="retention-note"></p>
     <div class="tabs" role="tablist" id="tabs"></div>
     <div class="stats" id="stats"></div>
+    <div class="tabs device-filter" id="device-filter" role="group" aria-label="סינון לפי מכשיר"></div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -45,6 +46,10 @@
     const ADMIN = (() => { const k = new URLSearchParams(location.search).get('admin'); try { if (k) localStorage.setItem('iai_admin', k); return k || localStorage.getItem('iai_admin'); } catch { return k; } })();
     const adminHeaders = ADMIN ? { 'X-Admin-Token': ADMIN } : {};
     const LANG_LABEL = { he: 'עב', en: 'EN', ar: 'ع' };
+    const DEVICE_ICON = { mobile: '📱', tablet: '📱', desktop: '💻' };
+    const DEVICE_LABEL = { mobile: 'טלפון', tablet: 'טאבלט', desktop: 'מחשב' };
+    let deviceFilter = ''; // '' | 'mobile' | 'desktop'  (tablet counts with phones)
+    let lastRows = [];
     let selected = new URLSearchParams(location.search).get('org') || '';
     let lastKey = '';
 
@@ -88,6 +93,7 @@
         card('סה״כ משובים', String(total)),
         card('משתמשים ייחודיים', String(distinctUsers), distinctUsers ? `${(total / distinctUsers).toFixed(1)} משובים למשתמש` : null),
         card('קול / טקסט', `${sum('voice')} / ${sum('text')}`),
+        card('📱 טלפון / 💻 מחשב', `${sum('mobile') + sum('tablet')} / ${sum('desktop')}`, sum('shared') ? `🔗 ${sum('shared')} דרך קישור משותף` : 'כולם מהמחשב המקומי'),
         card('חיובי', String(sum('positive')), pct(sum('positive'))),
         card('ניטרלי', String(sum('neutral')), pct(sum('neutral'))),
         card('שלילי', String(sum('negative')), pct(sum('negative'))),
@@ -95,7 +101,23 @@
       );
     }
 
-    function renderRows(rows) {
+    function renderDeviceFilter() {
+      const all = lastRows.length;
+      const phones = lastRows.filter(f => f.device === 'mobile' || f.device === 'tablet').length;
+      const pcs = lastRows.filter(f => f.device === 'desktop').length;
+      const opts = [['', `הכל (${all})`], ['mobile', `📱 טלפון (${phones})`], ['desktop', `💻 מחשב (${pcs})`]];
+      $('device-filter').replaceChildren(...opts.map(([v, label]) => {
+        const b = el('button', { className: 'tab', type: 'button', textContent: label });
+        b.setAttribute('aria-pressed', String(v === deviceFilter));
+        b.setAttribute('aria-selected', String(v === deviceFilter));
+        b.onclick = () => { deviceFilter = v; renderDeviceFilter(); renderRows(lastRows); };
+        return b;
+      }));
+    }
+
+    function renderRows(allRows) {
+      const rows = !deviceFilter ? allRows
+        : allRows.filter(f => (deviceFilter === 'mobile' ? f.device === 'mobile' || f.device === 'tablet' : f.device === deviceFilter));
       $('empty').hidden = rows.length > 0;
       $('rows').replaceChildren(...rows.map(f => {
         const date = new Date(f.createdAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
@@ -116,7 +138,8 @@
           el('td', { className: 'nowrap', textContent: f.orgName }),
           el('td', { className: 'user', title: `מזהה: ${f.endUserId}${f.ipHash ? ' · IP hash: ' + f.ipHash : ''}` },
             el('div', { className: 'uid', textContent: '#' + String(f.endUserId).slice(0, 6) }),
-            el('div', { className: 'ctx', textContent: [f.feedbackLang && LANG_LABEL[f.feedbackLang], f.browser, f.os, f.device, f.country].filter(Boolean).join(' · ') || '—' })),
+            el('div', { className: 'ctx', textContent: [f.device && `${DEVICE_ICON[f.device] || ''} ${DEVICE_LABEL[f.device] || f.device}`, f.feedbackLang && LANG_LABEL[f.feedbackLang], f.browser, f.os, f.country].filter(Boolean).join(' · ') || '—' }),
+            f.channel === 'shared' ? el('div', { className: 'pill type', textContent: '🔗 דרך קישור משותף', style: 'margin-top:4px' }) : null),
           el('td', {}, el('span', { className: 'pill type', textContent: f.type === 'voice' ? '🎤 קול' : '✍️ טקסט' })),
           content,
           el('td', {}, audio),
@@ -150,6 +173,8 @@
         lastKey = key;
         renderTabs(stats);
         renderStats(stats, rows);
+        lastRows = rows;
+        renderDeviceFilter();
         renderRows(rows);
       } catch {
         $('updated').textContent = 'לא ניתן להתחבר לשרת';

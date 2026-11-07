@@ -22,8 +22,9 @@ if not exist "public\sites\shufersal.png" (
 )
 
 echo.
-echo Creating a public link for phones and other computers...
-echo Feedback from visitors is saved on THIS computer. The link works while this window is open.
+echo Creating a public link for phones and other computers. This takes 10-30 seconds.
+echo KEEP THIS WINDOW OPEN: the link works only while it is open.
+echo Feedback from visitors is saved on THIS computer.
 echo.
 node scripts\share.js
 pause
