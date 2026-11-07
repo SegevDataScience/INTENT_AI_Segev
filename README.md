@@ -2,6 +2,7 @@
 
 **משוב קולי וטקסטואלי שהופך לתובנות.** משתמשים משאירים משוב באתר בקול או בטקסט, המערכת מנתחת אותו ושומרת אותו, וצוות המוצר רואה הכול בדשבורד לפי לקוח.
 
+> 🔗 **קישור קבוע לאתרים האמיתיים (24/7, גם כשהמחשב כבוי):** https://intent-ai-demo.segevdatascience.workers.dev/ (המשובים נשמרים בענן, Cloudflare D1)
 > 🌐 **דמו חי:** https://segevdatascience.github.io/INTENT_AI_Segev/ (אתרי דמה ונתונים סינתטיים. משוב שתשלחו נשמר רק בדפדפן שלכם)
 > 📓 **מחברת עם תרשימים:** [`simulation/notebooks/raw_data_demo.ipynb`](simulation/notebooks/raw_data_demo.ipynb)
 > 📊 **מצגת (3 שקופיות):** [`Intent-AI-overview.pptx`](Intent-AI-overview.pptx)

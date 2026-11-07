@@ -8,7 +8,7 @@
   "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": ["/api/*", "/audio/*"] },
   "d1_databases": [
     // database_id is filled in by `npm run setup` (wrangler d1 create) on first deploy
-    { "binding": "DB", "database_name": "intent-ai-demo", "database_id": "00000000-0000-0000-0000-000000000000" }
+    { "binding": "DB", "database_name": "intent-ai-demo", "database_id": "40f751aa-11f1-4c46-a562-f7c32a03f007" }
   ],
   // daily retention purge (90 days)
   "triggers": { "crons": ["17 3 * * *"] },
